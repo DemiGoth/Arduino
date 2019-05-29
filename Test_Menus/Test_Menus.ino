@@ -40,11 +40,12 @@ unsigned int held = 0xF00F;
 unsigned int longpresstime = 5000;
 
 const int numberofscreens = 3;
-int currentscreen = 0;
-String screens [numberofscreens][4] = {
-  {"Screen 0","12","13","14"},
-  {"Screen 1","22","23","24"},
-  {"Screen 2","32","33","34"}
+unsigned int currentscreen = 0;
+unsigned int lastscreen = 0;
+String screens [numberofscreens][2][4] = { // Screen, column, row. 
+  {{"Scrn 0","02","03","04"},{"Demi Systems","05","06","07"}},
+  {{"Scrn 1","12","13","14"},{"Demi Systems","15","16","17"}},
+  {{"Scrn 2","22","23","24"},{"Demi Systems","25","26","27"}}
 };
 
 void setup() {  
@@ -65,6 +66,22 @@ void setup() {
 
   lcd.init();
   lcd.backlight();
+  lcd.clear();
+  lcd.print(screens[currentscreen][0][0]); // column 1
+  lcd.setCursor(0,1);
+  lcd.print(screens[currentscreen][0][1]);
+  lcd.setCursor(0,2);
+  lcd.print(screens[currentscreen][0][2]);
+  lcd.setCursor(0,3);
+  lcd.print(screens[currentscreen][0][3]);
+  lcd.setCursor(8,0);
+  lcd.print(screens[currentscreen][1][0]); // column 2
+  lcd.setCursor(8,1);
+  lcd.print(screens[currentscreen][1][1]);
+  lcd.setCursor(8,2);
+  lcd.print(screens[currentscreen][1][2]);
+  lcd.setCursor(8,3);
+  lcd.print(screens[currentscreen][1][3]);
 }
 
 
@@ -95,7 +112,6 @@ void updateKeyHistory(){  // Poll each column of the matrix and store the return
     star.history = star.history << 1;
     star.history |= digitalRead(row4);
     digitalWrite(col1, LOW);
-    
     digitalWrite(col2, HIGH);
     two.history = two.history << 1;
     two.history |= digitalRead(row1);
@@ -106,7 +122,6 @@ void updateKeyHistory(){  // Poll each column of the matrix and store the return
     zero.history = zero.history << 1;
     zero.history |= digitalRead(row4);
     digitalWrite(col2, LOW);
-
     digitalWrite(col3, HIGH);
     three.history = three.history << 1;
     three.history |= digitalRead(row1);
@@ -132,19 +147,29 @@ void inputclear(){
   nine.ispressed = 0;
   star.ispressed = 0;
   hash.ispressed = 0;
+  return;
 }
 
 void updateLCD(){
   lcd.clear();
-  lcd.print(screens[currentscreen][0]);
+  lcd.print(screens[currentscreen][0][0]); // column 1
   lcd.setCursor(0,1);
-  lcd.print(screens[currentscreen][1]);
+  lcd.print(screens[currentscreen][0][1]);
   lcd.setCursor(0,2);
-  lcd.print(screens[currentscreen][2]);
+  lcd.print(screens[currentscreen][0][2]);
   lcd.setCursor(0,3);
-  lcd.print(screens[currentscreen][3]);
-  lcd.setCursor(0,4);
+  lcd.print(screens[currentscreen][0][3]);
+  lcd.setCursor(8,0);
+  lcd.print(screens[currentscreen][1][0]); // column 2
+  lcd.setCursor(8,1);
+  lcd.print(screens[currentscreen][1][1]);
+  lcd.setCursor(8,2);
+  lcd.print(screens[currentscreen][1][2]);
+  lcd.setCursor(8,3);
+  lcd.print(screens[currentscreen][1][3]);
+  lastscreen = currentscreen;
   inputclear();
+  return;
 }
 
 void updateMenu(){
@@ -156,7 +181,7 @@ void updateMenu(){
       currentscreen--;
     }
   }
-  if(hash.ispressed == 2){
+  else if(hash.ispressed == 2){
     if(currentscreen == numberofscreens - 1){
       currentscreen = 0;
     }
@@ -164,7 +189,7 @@ void updateMenu(){
       currentscreen++;
     }
   }
-  updateLCD();
+  return;
 }
 
 void keyRead(){
@@ -190,13 +215,19 @@ void keyRead(){
   else if((hash.history & MASK) == released && hash.ispressed == 1 && hash.holdtime < longpresstime){
     hash.ispressed = 2;
     hash.holdtime = 0;
-    updateMenu();
   }
+  return;
 }
 
 void loop() {
   if (bounceCount >= 20){
     updateKeyHistory();
     keyRead();
+  }
+  if (zero.ispressed | one.ispressed | two.ispressed | three.ispressed | four.ispressed | five.ispressed | six.ispressed | seven.ispressed | eight.ispressed | nine.ispressed | star.ispressed | hash.ispressed){
+    updateMenu();
+  }
+  if (lastscreen != currentscreen){
+    updateLCD();
   }
 }
